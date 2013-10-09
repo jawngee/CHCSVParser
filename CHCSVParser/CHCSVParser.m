@@ -75,7 +75,7 @@ NSString *const CHCSVErrorDomain = @"com.davedelong.csv";
 }
 
 - (id)initWithCSVString:(NSString *)csv {
-    NSStringEncoding encoding = [csv fastestEncoding];
+    NSStringEncoding encoding = NSUTF8StringEncoding;//[csv fastestEncoding];
     NSInputStream *stream = [NSInputStream inputStreamWithData:[csv dataUsingEncoding:encoding]];
     return [self initWithInputStream:stream usedEncoding:&encoding delimiter:COMMA];
 }
@@ -729,6 +729,33 @@ NSString *const CHCSVErrorDomain = @"com.davedelong.csv";
 
 @implementation NSArray (CHCSVAdditions)
 
++ (instancetype)arrayWithContentsOfCSVString:(NSString *)csvString
+{
+    return [self arrayWithContentsOfCSVString:csvString options:0];
+}
+
++ (instancetype)arrayWithContentsOfCSVString:(NSString *)csvString options:(CHCSVParserOptions)options
+{
+    NSParameterAssert(csvString);
+    _CHCSVAggregator *aggregator = [[_CHCSVAggregator alloc] init];
+    CHCSVParser *parser = [[CHCSVParser alloc] initWithCSVString:csvString];
+    [parser setDelegate:aggregator];
+    
+    [parser setRecognizesBackslashesAsEscapes:!!(options & CHCSVParserOptionsRecognizesBackslashesAsEscapes)];
+    [parser setSanitizesFields:!!(options & CHCSVParserOptionsSanitizesFields)];
+    [parser setRecognizesComments:!!(options & CHCSVParserOptionsRecognizesComments)];
+    [parser setStripsLeadingAndTrailingWhitespace:!!(options & CHCSVParserOptionsStripsLeadingAndTrailingWhitespace)];
+    
+    [parser parse];
+    CHCSV_RELEASE(parser);
+    
+    NSArray *final = CHCSV_AUTORELEASE(CHCSV_RETAIN([aggregator lines]));
+    CHCSV_RELEASE(aggregator);
+    
+    return final;
+
+}
+
 + (instancetype)arrayWithContentsOfCSVFile:(NSString *)csvFilePath {
     return [self arrayWithContentsOfCSVFile:csvFilePath options:0];
 }
@@ -769,6 +796,7 @@ NSString *const CHCSVErrorDomain = @"com.davedelong.csv";
     return CHCSV_AUTORELEASE(string);
 }
 
+
 @end
 
 @implementation NSString (CHCSVAdditions)
@@ -797,3 +825,28 @@ NSString *const CHCSVErrorDomain = @"com.davedelong.csv";
 }
 
 @end
+
+#pragma mark -- MapCSVArrayToDictionaries
+
+NSArray *MapCSVArrayToDictionaries(NSArray *csvArray)
+{
+    if (csvArray.count==0)
+        return nil;
+    
+    
+    NSArray *fields=csvArray[0];
+    for(NSString *fieldName in fields)
+    {
+        if (fieldName==nil)
+            return nil;
+    }
+    
+    NSMutableArray *result=[NSMutableArray array];
+    for(int i=1; i<csvArray.count; i++)
+    {
+        NSMutableDictionary *dict=[NSMutableDictionary dictionaryWithObjects:csvArray[i] forKeys:fields];
+        [result addObject:dict];
+    }
+    
+    return result;
+}

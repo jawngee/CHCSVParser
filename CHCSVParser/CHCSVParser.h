@@ -98,9 +98,12 @@ typedef NS_OPTIONS(NSUInteger, CHCSVParserOptions) {
 
 @interface NSArray (CHCSVAdditions)
 
++ (instancetype)arrayWithContentsOfCSVString:(NSString *)csvString;
++ (instancetype)arrayWithContentsOfCSVString:(NSString *)csvString options:(CHCSVParserOptions)options;
 + (instancetype)arrayWithContentsOfCSVFile:(NSString *)csvFilePath;
 + (instancetype)arrayWithContentsOfCSVFile:(NSString *)csvFilePath options:(CHCSVParserOptions)options;
 - (NSString *)CSVString;
+- (NSDictionary *)CVDictionary;
 
 @end
 
@@ -110,3 +113,5 @@ typedef NS_OPTIONS(NSUInteger, CHCSVParserOptions) {
 - (NSArray *)CSVComponentsWithOptions:(CHCSVParserOptions)options;
 
 @end
+
+extern NSArray *MapCSVArrayToDictionaries(NSArray *map);
